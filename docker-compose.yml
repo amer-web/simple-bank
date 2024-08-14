@@ -1,0 +1,23 @@
+version: '3.1'
+
+services:
+  database:
+    image: postgres:latest
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: amer
+      POSTGRES_PASSWORD: amer
+      POSTGRES_DB: simple_bank
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./../postgres_data:/var/lib/postgresql/data
+  pgAdmin:
+    image: dpage/pgadmin4
+    container_name: pg-admin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "amer@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "amer"
+    ports:
+      - "5050:80"
+
