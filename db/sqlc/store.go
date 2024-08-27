@@ -6,19 +6,23 @@ import (
 	"log"
 )
 
-type Store struct {
+type Store interface {
+	Querier
+	TransferTx(context context.Context, arrg ArrgTransfer) (ResultTransfer, error)
+}
+type SQLStore struct {
 	*Queries
 	db *sql.DB
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
-func (s *Store) execTx(context context.Context, fn func(q *Queries) error) error {
+func (s *SQLStore) execTx(context context.Context, fn func(q *Queries) error) error {
 	tx, err := s.db.BeginTx(context, nil)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -49,7 +53,7 @@ type ResultTransfer struct {
 }
 
 // add tra , add entr , update balance
-func (s *Store) TransferTx(context context.Context, arrg ArrgTransfer) (ResultTransfer, error) {
+func (s *SQLStore) TransferTx(context context.Context, arrg ArrgTransfer) (ResultTransfer, error) {
 	var result ResultTransfer
 	err := s.execTx(context, func(q *Queries) error {
 		var err error

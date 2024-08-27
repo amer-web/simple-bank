@@ -70,7 +70,6 @@ func TestCreateTrans(t *testing.T) {
 		toAcc := result.ToAcc
 		require.NotEmpty(t, toAcc)
 		require.Equal(t, acc2.ID, toAcc.ID)
-		log.Println("tx update ", fromAcc.Balance, toAcc.Balance)
 	}
 	getAcc1, err := store.GetAccount(context.Background(), acc1.ID)
 	require.NoError(t, err)
