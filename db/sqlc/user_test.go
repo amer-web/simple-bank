@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func createRandomUser(t *testing.T) User {
+func createRandomUser(t *testing.T) CreateUserRow {
 	hashPassword, err := helper.HashPassword(helper.RandomString(4))
 	require.NoError(t, err)
 	arg := CreateUserParams{
@@ -23,7 +23,6 @@ func createRandomUser(t *testing.T) User {
 	require.Equal(t, arg.FullName, user.FullName)
 	require.Equal(t, arg.Email, user.Email)
 
-	require.NotZero(t, user.CreatedAt)
 	return user
 }
 func TestCreateUser(t *testing.T) {
