@@ -1,5 +1,5 @@
 name ?= ''
-.PHONY: help migrate-up migrate-down fresh migrate-create sqlc test run mock
+.PHONY: help migrate-up migrate-down fresh migrate-create sqlc test run mock proto
 help: ## Print help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 migrate-up: ## run migrate up
@@ -38,3 +38,11 @@ run: ## run server
 
 mock: ## run mock
 	@mockgen -package mockdb -destination db/mock/store.go github.com/amer-web/simple-bank/db/sqlc Store
+proto: ## generate go code from proto files
+	rm -f pb/*.go
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+        --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+        --grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
+        proto/*.proto
+evans: ## run evans
+	evans -r repl -p 50051

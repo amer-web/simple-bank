@@ -3,9 +3,7 @@ INSERT INTO users (username,
                    full_name,
                    email,
                    password)
-VALUES ($1, $2, $3, $4) RETURNING username,
-full_name,
-email;
+VALUES ($1, $2, $3, $4) RETURNING *;
 
 -- name: GetUser :one
 SELECT *

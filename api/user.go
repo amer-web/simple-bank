@@ -61,11 +61,11 @@ type ResponseLoginUser struct {
 	AccessToken string       `json:"access_token"`
 }
 type ResponseUser struct {
-	Username          string       `json:"username"`
-	FullName          string       `json:"full_name"`
-	Email             string       `json:"email"`
-	PasswordChangedAt sql.NullTime `json:"password_changed_at"`
-	CreatedAt         time.Time    `json:"created_at"`
+	Username          string    `json:"username"`
+	FullName          string    `json:"full_name"`
+	Email             string    `json:"email"`
+	PasswordChangedAt time.Time `json:"password_changed_at"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
 func (s *Server) loginUser(c *gin.Context) {
