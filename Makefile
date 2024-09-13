@@ -39,10 +39,12 @@ run: ## run server
 mock: ## run mock
 	@mockgen -package mockdb -destination db/mock/store.go github.com/amer-web/simple-bank/db/sqlc Store
 proto: ## generate go code from proto files
-	rm -f pb/*.go
+	rm -r pb/*
 	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
         --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
         --grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
+        --validate_out="lang=go:pb" --validate_opt=paths=source_relative \
+        --experimental_allow_proto3_optional \
         proto/*.proto
 evans: ## run evans
 	evans -r repl -p 50051

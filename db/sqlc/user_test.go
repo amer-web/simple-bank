@@ -2,12 +2,13 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"github.com/amer-web/simple-bank/helper"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func createRandomUser(t *testing.T) CreateUserRow {
+func createRandomUser(t *testing.T) User {
 	hashPassword, err := helper.HashPassword(helper.RandomString(4))
 	require.NoError(t, err)
 	arg := CreateUserParams{
@@ -37,4 +38,21 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, user.Username, getUser.Username)
 	require.Equal(t, user.Email, getUser.Email)
 	require.Equal(t, user.FullName, getUser.FullName)
+}
+func TestUpdateUserOnlyEmail(t *testing.T) {
+	user := createRandomUser(t)
+	newEmail := helper.RandomEmail()
+	updated, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+		Username: user.Username,
+		Email: sql.NullString{
+			Valid:  true,
+			String: newEmail,
+		},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, updated)
+	require.Equal(t, user.Username, updated.Username)
+	require.Equal(t, newEmail, updated.Email)
+	require.Equal(t, user.FullName, updated.FullName)
+
 }

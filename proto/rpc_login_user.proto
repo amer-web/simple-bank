@@ -1,11 +1,12 @@
 syntax = "proto3";
 package pb;
 import "user.proto";
+import "validate/validate.proto";
 option go_package = "github.com/amer-web/simple-bank/pb";
 
 message LoginUserRequest {
-  string username = 1;
-  string password = 2;
+  string username = 1 [(validate.rules).string.min_len = 4];
+  string password = 2 [(validate.rules).string.min_len = 6];
 }
 
 message LoginUserResponse {

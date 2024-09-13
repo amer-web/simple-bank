@@ -2,7 +2,6 @@ package token
 
 import (
 	"aidanwoods.dev/go-paseto"
-	"fmt"
 	"github.com/google/uuid"
 	"time"
 )
@@ -34,7 +33,6 @@ func (p *PasetoMaker) VerifyToken(encryptedToken string) (*Payload, error) {
 	parser := paseto.NewParserForValidNow()
 	parsedToken, err := parser.ParseV4Local(key, encryptedToken, nil)
 	if err != nil {
-		fmt.Println("Error decrypting token:", err)
 		return nil, err
 	}
 	var id uuid.UUID

@@ -8,28 +8,33 @@ import (
 	"github.com/amer-web/simple-bank/config"
 	db2 "github.com/amer-web/simple-bank/db/sqlc"
 	"github.com/amer-web/simple-bank/gapi"
+	"github.com/amer-web/simple-bank/middleware"
 	"github.com/amer-web/simple-bank/pb"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
-	"log"
 	"net"
 	"net/http"
+	"os"
 )
 
 func init() {
 	err := config.LoadConfig()
 	if err != nil {
-		log.Fatal(err)
+		log.Error().Msg(err.Error())
 	}
 }
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	source := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable", config.Source.DBUser, config.Source.DBPassword, config.Source.DBHost, config.Source.DBPort, config.Source.DBName)
 	db, err := sql.Open(config.Source.DRIVER, source)
 	if err != nil {
-		log.Fatal("error opening db:", err.Error())
+		log.Error().Msgf("error opening db: %s", err.Error())
+
 	}
 	defer db.Close()
 	store := db2.NewStore(db)
@@ -43,15 +48,21 @@ func runGinServer(store db2.Store) {
 func runGrpcServer(store db2.Store) {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Error().Msgf("failed to listen: %s", err.Error())
+
 	}
 	server := gapi.NewServer(store)
-	grpcServer := grpc.NewServer()
+	interceptors := grpc.ChainUnaryInterceptor(
+		middleware.LoggerInterceptorGrpc,
+		middleware.AuthInterceptorGrpc,
+	)
+	grpcServer := grpc.NewServer(interceptors)
 	reflection.Register(grpcServer)
 	pb.RegisterSimpleBankServer(grpcServer, server)
-	log.Println("gRPC server listening on :50051")
+	log.Info().Msg("gRPC server listening on :50051")
+
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Error().Msgf("failed to serve: %v", err.Error())
 	}
 }
 func runGrpcGateway(store db2.Store) error {
@@ -74,6 +85,14 @@ func runGrpcGateway(store db2.Store) error {
 	if err != nil {
 		return err
 	}
-	log.Println("HTTP server listening on :8080")
-	return http.ListenAndServe(":8080", mux)
+
+	logger := middleware.AuthMiddlewareGrpcGateway(mux)
+	log.Info().Msg("HTTP server listening on :8080")
+	err = http.ListenAndServe(":8080", middleware.LoggerInterceptorHttp(logger))
+	if err != nil {
+		log.Error().Msg(err.Error())
+		return err
+	}
+	return nil
+
 }

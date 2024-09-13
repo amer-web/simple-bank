@@ -12,6 +12,12 @@ import (
 )
 
 func (s *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*pb.LoginUserResponse, error) {
+
+	// Validate request
+	if err := req.ValidateAll(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid input: %v", err)
+	}
+
 	user, err := s.store.GetUser(ctx, req.Username)
 	if err != nil {
 		if err == sql.ErrNoRows {
