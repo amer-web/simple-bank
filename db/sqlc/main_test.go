@@ -1,8 +1,8 @@
 package db
 
 import (
-	"database/sql"
-	_ "github.com/lib/pq"
+	"context"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"os"
 	"testing"
@@ -13,16 +13,13 @@ const (
 	source = "postgresql://amer:amer@127.0.0.1:5432/simple_bank?sslmode=disable"
 )
 
-var testQueries *Queries
-var dbTest *sql.DB
+var testStore Store
 
 func TestMain(m *testing.M) {
-	db, err := sql.Open(driver, source)
+	connection, err := pgxpool.New(context.Background(), source)
 	if err != nil {
 		log.Fatal("error opening db:", err.Error())
 	}
-	defer db.Close()
-	testQueries = New(db)
-	dbTest = db
+	testStore = NewStore(connection)
 	os.Exit(m.Run())
 }

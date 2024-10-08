@@ -1,0 +1,14 @@
+syntax = "proto3";
+package pb;
+import "user.proto";
+import "validate/validate.proto";
+option go_package = "github.com/amer-web/simple-bank/pb";
+
+message VerifyEmailRequest {
+  string token = 1 [(validate.rules).string.min_len = 4];
+}
+
+message VerifyEmailResponse {
+  User user = 1;
+  string token = 2;
+}

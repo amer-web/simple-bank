@@ -2,8 +2,9 @@ package gapi
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"github.com/amer-web/simple-bank/config"
+	db "github.com/amer-web/simple-bank/db/sqlc"
 	"github.com/amer-web/simple-bank/helper"
 	"github.com/amer-web/simple-bank/pb"
 	tok "github.com/amer-web/simple-bank/token"
@@ -20,7 +21,7 @@ func (s *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*pb.L
 
 	user, err := s.store.GetUser(ctx, req.Username)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrorRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Error(codes.Internal, err.Error())

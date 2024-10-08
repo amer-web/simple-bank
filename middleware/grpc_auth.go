@@ -18,7 +18,7 @@ var protectedMethods = map[string]bool{
 	"/pb.SimpleBank/UpdateUser": true,
 }
 var protectedMethodsApi = map[string]bool{
-	"/v1/create_user": true,
+	"/v1/create_user": false,
 	"/v1/update_user": true,
 	"/v1/login":       false,
 }

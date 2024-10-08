@@ -1,10 +1,9 @@
 package api
 
 import (
-	"database/sql"
+	"errors"
 	db "github.com/amer-web/simple-bank/db/sqlc"
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 	"net/http"
 	"strconv"
 )
@@ -31,12 +30,10 @@ func (s *Server) createAccount(c *gin.Context) {
 		Currency: req.Currency,
 	})
 	if err != nil {
-		if err, ok := err.(*pq.Error); ok {
-			switch err.Code.Name() {
-			case "unique_violation", "foreign_key_violation":
-				c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-				return
-			}
+		switch db.ErrorCode(err) {
+		case "unique_violation", "foreign_key_violation":
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -56,7 +53,7 @@ func (s *Server) getAccount(c *gin.Context) {
 	}
 	account, err := s.store.GetAccount(c, req.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Account not found"})
 			return
 		}

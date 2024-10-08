@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	"database/sql"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 )
 
@@ -12,31 +12,31 @@ type Store interface {
 }
 type SQLStore struct {
 	*Queries
-	db *sql.DB
+	connPool *pgxpool.Pool
 }
 
-func NewStore(db *sql.DB) Store {
+func NewStore(connPool *pgxpool.Pool) Store {
+
 	return &SQLStore{
-		db:      db,
-		Queries: New(db),
+		connPool: connPool,
+		Queries:  New(connPool),
 	}
 }
 
 func (s *SQLStore) execTx(context context.Context, fn func(q *Queries) error) error {
-	tx, err := s.db.BeginTx(context, nil)
+	tx, err := s.connPool.Begin(context)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	q := New(tx)
 	err = fn(q)
 	if err != nil {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(context); err != nil {
 			log.Println("Rollback failed:", err)
 		}
 		return err
 	}
-	return tx.Commit()
-
+	return tx.Commit(context)
 }
 
 type ArrgTransfer struct {

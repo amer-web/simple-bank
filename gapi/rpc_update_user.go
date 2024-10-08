@@ -2,10 +2,11 @@ package gapi
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	db "github.com/amer-web/simple-bank/db/sqlc"
 	"github.com/amer-web/simple-bank/helper"
 	"github.com/amer-web/simple-bank/pb"
+	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -17,21 +18,21 @@ func (s *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb
 	}
 	user, err := s.store.UpdateUser(ctx, db.UpdateUserParams{
 		Username: req.Username,
-		FullName: sql.NullString{
+		FullName: pgtype.Text{
 			String: req.GetFullName(),
 			Valid:  req.GetFullName() != "",
 		},
-		Email: sql.NullString{
+		Email: pgtype.Text{
 			String: req.GetEmail(),
 			Valid:  req.GetEmail() != "",
 		},
-		Password: sql.NullString{
+		Password: pgtype.Text{
 			String: hashPassword,
 			Valid:  hashPassword != "",
 		},
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrorRecordNotFound) {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())

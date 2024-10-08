@@ -39,7 +39,7 @@ func TestGetAccount(t *testing.T) {
 			builsStup: func(store *mockdb.MockStore) {
 				store.EXPECT().GetAccount(gomock.Any(), acc.ID).
 					Times(1).
-					Return(db.Account{}, sql.ErrNoRows)
+					Return(db.Account{}, db.ErrorRecordNotFound)
 			},
 			checkRes: func(t *testing.T, res *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNotFound, res.Code)

@@ -15,7 +15,7 @@ func TestCreateTransfer(t *testing.T) {
 		ToAccountID:   acc2.ID,
 		Amount:        helper.RandomInt(1, 1000),
 	}
-	createTransfer, err := testQueries.CreateTransfer(context.Background(), arg)
+	createTransfer, err := testStore.CreateTransfer(context.Background(), arg)
 	require.NoError(t, err)
 	require.Equal(t, arg.FromAccountID, createTransfer.FromAccountID)
 	require.Equal(t, arg.ToAccountID, createTransfer.ToAccountID)

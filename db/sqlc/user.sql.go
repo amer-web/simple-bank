@@ -7,7 +7,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -26,7 +27,7 @@ type CreateUserParams struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser,
+	row := q.db.QueryRow(ctx, createUser,
 		arg.Username,
 		arg.FullName,
 		arg.Email,
@@ -51,7 +52,7 @@ WHERE username = $1 LIMIT 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUser, username)
+	row := q.db.QueryRow(ctx, getUser, username)
 	var i User
 	err := row.Scan(
 		&i.Username,
@@ -73,14 +74,14 @@ set full_name = coalesce($1, full_name),
 `
 
 type UpdateUserParams struct {
-	FullName sql.NullString `json:"full_name"`
-	Email    sql.NullString `json:"email"`
-	Password sql.NullString `json:"password"`
-	Username string         `json:"username"`
+	FullName pgtype.Text `json:"full_name"`
+	Email    pgtype.Text `json:"email"`
+	Password pgtype.Text `json:"password"`
+	Username string      `json:"username"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updateUser,
+	row := q.db.QueryRow(ctx, updateUser,
 		arg.FullName,
 		arg.Email,
 		arg.Password,

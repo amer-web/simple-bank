@@ -2,8 +2,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"github.com/amer-web/simple-bank/helper"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -17,7 +17,7 @@ func createRandomUser(t *testing.T) User {
 		Email:    helper.RandomEmail(),
 		Password: hashPassword,
 	}
-	user, err := testQueries.CreateUser(context.Background(), arg)
+	user, err := testStore.CreateUser(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
 	require.Equal(t, arg.Username, user.Username)
@@ -32,7 +32,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestGetUser(t *testing.T) {
 	user := createRandomUser(t)
-	getUser, err := testQueries.GetUser(context.Background(), user.Username)
+	getUser, err := testStore.GetUser(context.Background(), user.Username)
 	require.NoError(t, err)
 	require.NotEmpty(t, getUser)
 	require.Equal(t, user.Username, getUser.Username)
@@ -42,9 +42,9 @@ func TestGetUser(t *testing.T) {
 func TestUpdateUserOnlyEmail(t *testing.T) {
 	user := createRandomUser(t)
 	newEmail := helper.RandomEmail()
-	updated, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+	updated, err := testStore.UpdateUser(context.Background(), UpdateUserParams{
 		Username: user.Username,
-		Email: sql.NullString{
+		Email: pgtype.Text{
 			Valid:  true,
 			String: newEmail,
 		},

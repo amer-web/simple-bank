@@ -5,11 +5,13 @@ import (
 	"github.com/amer-web/simple-bank/config"
 	db "github.com/amer-web/simple-bank/db/sqlc"
 	"github.com/amer-web/simple-bank/helper"
+	"github.com/amer-web/simple-bank/jobs"
 	"github.com/amer-web/simple-bank/pb"
 	tok "github.com/amer-web/simple-bank/token"
-	"github.com/lib/pq"
+	"github.com/hibiken/asynq"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"time"
 )
 
 func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
@@ -24,16 +26,25 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		Password: hash,
 	})
 	if err != nil {
-		if err, ok := err.(*pq.Error); ok {
-			switch err.Code.Name() {
-			case "unique_violation", "foreign_key_violation":
-				return nil, status.Error(codes.AlreadyExists, err.Error())
-			}
+		switch db.ErrorCode(err) {
+		case "unique_violation", "foreign_key_violation":
+			return nil, status.Error(codes.AlreadyExists, err.Error())
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
+	conOpt := []asynq.Option{
+		asynq.ProcessIn(time.Second * 5),
+		asynq.MaxRetry(100),
+	}
 	handleToken := tok.NewMakerToken()
 	token, _ := handleToken.CreateToken(user.Username, config.Source.TOKENDURATION)
+	payload := jobs.SendEmailVerifyJob{
+		Username: user.Username,
+		Email:    user.Email,
+		Token:    token,
+	}
+	s.tasks.DistributorSendEmailToQueue(ctx, payload, conOpt...)
 	return &pb.CreateUserResponse{User: convertUser(user),
 		AccessToken: token,
 	}, nil

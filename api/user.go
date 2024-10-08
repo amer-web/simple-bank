@@ -1,13 +1,12 @@
 package api
 
 import (
-	"database/sql"
+	"errors"
 	"github.com/amer-web/simple-bank/config"
 	db "github.com/amer-web/simple-bank/db/sqlc"
 	"github.com/amer-web/simple-bank/helper"
 	tok "github.com/amer-web/simple-bank/token"
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 	"net/http"
 	"time"
 )
@@ -38,13 +37,12 @@ func (s *Server) createUser(c *gin.Context) {
 		Password: hash,
 	})
 	if err != nil {
-		if err, ok := err.(*pq.Error); ok {
-			switch err.Code.Name() {
-			case "unique_violation", "foreign_key_violation":
-				c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
-				return
-			}
+		switch db.ErrorCode(err) {
+		case "unique_violation", "foreign_key_violation":
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
 		}
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -76,7 +74,7 @@ func (s *Server) loginUser(c *gin.Context) {
 	}
 	user, err := s.store.GetUser(c, req.Username)
 	if err != nil {
-		if err != sql.ErrNoRows {
+		if errors.Is(err, db.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 			return
 		}

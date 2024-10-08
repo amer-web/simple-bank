@@ -10,8 +10,6 @@ import (
 )
 
 func TestCreateTrans(t *testing.T) {
-	store := NewStore(dbTest)
-
 	acc1 := createRandomAccount(t)
 	acc2 := createRandomAccount(t)
 	log.Println("first  ", acc1.Balance, acc2.Balance)
@@ -27,7 +25,7 @@ func TestCreateTrans(t *testing.T) {
 		go func(name string) {
 			ctx := context.WithValue(context.Background(), "amount", name)
 			defer waitGroup.Done()
-			transfer, err := store.TransferTx(ctx, ArrgTransfer{
+			transfer, err := testStore.TransferTx(ctx, ArrgTransfer{
 				FromAcc: acc1.ID,
 				ToAcc:   acc2.ID,
 				Amount:  amount,
@@ -71,10 +69,10 @@ func TestCreateTrans(t *testing.T) {
 		require.NotEmpty(t, toAcc)
 		require.Equal(t, acc2.ID, toAcc.ID)
 	}
-	getAcc1, err := store.GetAccount(context.Background(), acc1.ID)
+	getAcc1, err := testStore.GetAccount(context.Background(), acc1.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, getAcc1)
-	getAcc2, err := store.GetAccount(context.Background(), acc2.ID)
+	getAcc2, err := testStore.GetAccount(context.Background(), acc2.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, getAcc2)
 	log.Println("after update ", getAcc1.Balance, getAcc2.Balance)
